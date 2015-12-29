@@ -1,0 +1,64 @@
+---
+title: "Natural Language Dataset Exploration"
+author: "Chris Hawkins"
+date: "24 December 2015"
+output: html_document
+---
+
+## Exploratory Analysis
+
+Before we begin the analysis, data must be downloaded and prepared. The following R code reproduces the steps taken
+to prepare and load the data:
+
+```{r, cache=TRUE, results=hide}
+download.file("https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip", "Coursera-SwiftKey.zip")
+unzip("Coursera-SwiftKey.zip")
+
+lang <- "en_US"
+directory = paste("final/", lang, "/", sep = "")
+rootfilename <- paste("final/", lang, "/", lang, sep = "")
+
+# load tweets
+twitter <- read.delim(paste(rootfilename, ".twitter.txt", sep = ""), header = F, sep = "\t", colClasses = c(character()))
+# load blogs
+blogs <- read.delim(paste(rootfilename, ".blogs.txt", sep = ""), header = F, sep = "\t", colClasses = c(character()))
+# load news
+news <- read.delim(paste(rootfilename, ".news.txt", sep = ""), header = F, sep = "\t", colClasses = c(character()))
+```
+
+To reduce unnecessary data (duplicate words with different punctuation and casing) and improve our results, the data is normalized
+to lowercase and all non-word characters are replaced with space.
+
+```{r, cache=TRUE, results=hide}
+cleanse_split <- function(sentence) {
+	sentence <- tolower(gsub("\\W", " ", sentence))
+	words <- strsplit(sentence, " ")
+	return(unlist(words))
+}
+
+cleansed_twitter <- cleanse_split(twitter)
+cleansed_blogs <- cleanse_split(blogs)
+cleansed_news <- cleanse_split(news)
+```
+
+Some basic summary statistics give us the following table:
+
+```{r, cache=TRUE, results=hide}
+summary_stats <- function(data) {
+  
+}
+```
+
+```{r}
+summary(cars)
+```
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+## Findings
