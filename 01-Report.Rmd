@@ -5,13 +5,127 @@ date: "24 December 2015"
 output: html_document
 ---
 
+## Overview
+
+The objective of this report is to present findings in around 0.5 GB of natural language text data acquired from several data
+sources. The following data files were used:
+
+|Name|Size|
+|---|---|
+|en_US.blogs.txt|200M|
+|en_US.news.txt|196M|
+|en_US.twitter.txt|159M|
+
+The eventual goal of this work is to use the natural language data set to predict the "next best word" given a source sentence.
+E.g. given: "a case of" the system will generate a suitable next word, such as "beer".
+
 ## Exploratory Analysis
 
-Before we begin the analysis, data must be downloaded and prepared. The following R code reproduces the steps taken
-to prepare and load the data:
+Before we begin the analysis, data must be downloaded and prepared.
 
-```{r, cache=TRUE, results=hide}
-download.file("https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip", "Coursera-SwiftKey.zip")
+1. the data is downloaded from a hosted location
+2. the data is unzipped
+3. the data is loaded into the R environment
+
+The R code in listing 1 (see appendix) reproduces the steps taken
+to prepare and load the data.
+
+To reduce unnecessary data (duplicate words with different punctuation and casing) and improve our results, the data is normalized
+to lowercase and all non-word characters are replaced with space. The code for this can be found in listing 2 (see appendix).
+
+Some basic summary statistics give us the following table (note when making comparisons
+that these statistics are from after the removal of punctuation):
+
+```{r, echo=FALSE}
+
+all_stats = data.frame(
+    name = c("twitter", "blogs", "news"),
+    num_rows = c(2360148, 899288, 1010242),
+    word_count = c(31150952, 38378041, 35793023),
+    distinct_words = c(326591, 268888, 227631),
+    length_in_chars = c(1.5645288E8, 2.0201773E8, 1.98512925E8),
+    longest_line_length = c(140, 40083, 11256),
+    top_three_words = c("the, i, to", "the, and, to", "the, to, a"),
+    bottom_three_words = c("janusas, bingonized, inrule", "bbcr4today, mells, raafi", "frane, inshort, hilyer")
+  )
+
+```
+
+```{r, echo=FALSE}
+library(knitr)
+kable(all_stats)
+```
+
+## Observations
+
+While Twitter makes up the largest dataset in terms of number of samples, Blogs and News provide significantly longer
+samples. This is to be expected based on the respective natures of the mediums involved (Twitter is limited to 140 characters).
+
+In all cases the the top three words are relatively familiar stop words from the English language. These words should be kept
+for this analysis as it is important to correctly predict stop word usage.
+
+The bottom three words in all cases are not necessarily words we will ever want to predict. A recommendation going forward would be
+to remove words (or phrases/n-grams) that occur only once from the dataset.
+
+## More Detailed Look at Word Frequencies
+
+These historgrams are produced using the code in listing 4 (see appendix) and demonstrate the very long tale of word usage.
+The most frequent words make up for a significant proportion of the words used overall.
+
+### Word Frequencies for Twitter
+
+```{r, echo=FALSE}
+twitter_freq <- read.delim("output/frequent_words_twitter", header = F)
+names(twitter_freq) <- c("word", "count")
+ordered_twitter_freq <- twitter_freq[order(-twitter_freq$count),]
+plot(ordered_twitter_freq$count, type="l", xlab="Word (ordered index)", ylab="Count")
+```
+
+### Word Frequencies for Blogs
+
+```{r, echo=FALSE}
+twitter_freq <- read.delim("output/frequent_words_blogs", header = F)
+names(twitter_freq) <- c("word", "count")
+ordered_twitter_freq <- twitter_freq[order(-twitter_freq$count),]
+plot(ordered_twitter_freq$count, type="l", xlab="Word (ordered index)", ylab="Count")
+```
+
+### Word Frequencies for News
+
+```{r, echo=FALSE}
+twitter_freq <- read.delim("output/frequent_words_news", header = F)
+names(twitter_freq) <- c("word", "count")
+ordered_twitter_freq <- twitter_freq[order(-twitter_freq$count),]
+plot(ordered_twitter_freq$count, type="l", xlab="Word (ordered index)", ylab="Count")
+```
+
+For example in the Twitter dataset the top twenty words make up a whopping 26.6% of the total word count:
+
+```{r, echo=FALSE}
+wordcount <- 31150952
+twitter_freq <- read.delim("output/frequent_words_twitter", header = F)
+names(twitter_freq) <- c("word", "count")
+ordered_twitter_freq <- twitter_freq[order(-twitter_freq$count),]
+ordered_twitter_freq$percent = sprintf("%1.2f%%", 100*(ordered_twitter_freq$count / wordcount))
+```
+
+```{r, echo=FALSE}
+kable(head(ordered_twitter_freq, n = 20))
+```
+
+## Final Note
+
+As part of this exercise, to overcome performance limitations of R, I experimented with rewriting the code
+in Scala and running on a small Spark cluster. You can see my adhoc Spark code (intended to be copied into Spark Shell)
+at my Github repository https://github.com/chrishawkins/datasci-capstone.
+
+## Appendix
+
+### Listing 1
+
+```{r, cache=TRUE, results='hide', eval=FALSE}
+download.file("https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip",
+              "Coursera-SwiftKey.zip")
 unzip("Coursera-SwiftKey.zip")
 
 lang <- "en_US"
@@ -19,46 +133,98 @@ directory = paste("final/", lang, "/", sep = "")
 rootfilename <- paste("final/", lang, "/", lang, sep = "")
 
 # load tweets
-twitter <- read.delim(paste(rootfilename, ".twitter.txt", sep = ""), header = F, sep = "\t", colClasses = c(character()))
+twitter <- read.delim(paste(rootfilename, ".twitter.txt", sep = ""),
+                      header = F, sep = "\t", colClasses = c(character()))
+
 # load blogs
-blogs <- read.delim(paste(rootfilename, ".blogs.txt", sep = ""), header = F, sep = "\t", colClasses = c(character()))
+blogs <- read.delim(paste(rootfilename, ".blogs.txt", sep = ""),
+                    header = F, sep = "\t", colClasses = c(character()))
+
 # load news
-news <- read.delim(paste(rootfilename, ".news.txt", sep = ""), header = F, sep = "\t", colClasses = c(character()))
+news <- read.delim(paste(rootfilename, ".news.txt", sep = ""),
+                   header = F, sep = "\t", colClasses = c(character()))
 ```
 
-To reduce unnecessary data (duplicate words with different punctuation and casing) and improve our results, the data is normalized
-to lowercase and all non-word characters are replaced with space.
+### Listing 2
 
-```{r, cache=TRUE, results=hide}
-cleanse_split <- function(sentence) {
-	sentence <- tolower(gsub("\\W", " ", sentence))
-	words <- strsplit(sentence, " ")
-	return(unlist(words))
+```{r, cache=TRUE, results='hide', eval=FALSE}
+cleanse_normalize <- function(sentence) {
+	return(tolower(gsub("\\W+", " ", sentence)))
 }
 
-cleansed_twitter <- cleanse_split(twitter)
-cleansed_blogs <- cleanse_split(blogs)
-cleansed_news <- cleanse_split(news)
+cleansed_twitter <- cleanse_normalize(twitter)
+cleansed_blogs <- cleanse_normalize(blogs)
+cleansed_news <- cleanse_normalize(news)
 ```
 
-Some basic summary statistics give us the following table:
+### Listing 3
 
-```{r, cache=TRUE, results=hide}
-summary_stats <- function(data) {
-  
+```{r, cache=TRUE, results='hide', eval=FALSE}
+
+word_count <- function(sentence) {
+	no_spaces <- gsub(" ", "", sentence)
+    return (nchar(sentence) - nchar(no_spaces))
 }
+
+word_freq <- function(sentence) {
+	df <- as.data.frame(table(strsplit(sentence, " ")))
+	colnames(df) <- c("word", "freq")
+	return(df)
+}
+
+summary_stats <- function(name, text) {
+	word_counts <- apply(text, 1, FUN=word_count)
+	char_counts <- apply(text, 1, FUN=nchar)
+	word_freqs <- apply(text, 1, FUN=word_freq)
+
+	rows <- nrow(text)
+
+	all_freqs <- do.call("rbind", word_freqs)
+	total_freqs <- aggregate(all_freqs$freq, by=list(word=all_freqs$word), FUN=sum)
+
+	top3 <- total_freqs[order(-total_freqs$x),][1:3, c("word")]
+	bottom3 <- total_freqs[order(total_freqs$x),][1:3, c("word")]
+
+	top3_str <- paste(top3, collapse=", ")
+	bottom3_str <- paste(bottom3, collapse=", ")
+
+	total_words = sum(word_counts)
+	total_chars = sum(char_counts)
+	longest_line_length = max(char_counts)
+	distinct_words = nrow(total_freqs)
+
+	return(data.frame(name = name,
+						        num_rows = rows,
+					  	      word_count = total_words,
+					  	      distinct_words = distinct_words,
+					  	      length_in_chars = total_chars,
+					  	      longest_line_length = longest_line_length,
+					  	      top_three_words = top3_str,
+					  	      bottom_three_words = bottom3_str))
+}
+
+twitter_stats <- summary_stats("twitter", cleansed_twitter)
+blogs_stats <- summary_stats("blogs", cleansed_blogs)
+news_stats <- summary_stats("news", cleansed_news)
+
+all_stats = rbind(twitter_stats, blogs_stats, news_stats)
+
 ```
 
-```{r}
-summary(cars)
+### Listing 4
+
+```{r, cache=TRUE, results='hide', eval=FALSE}
+
+freq_plot <- function(name, text) {
+	word_freqs <- apply(text, 1, FUN=word_freq)
+	all_freqs <- do.call("rbind", word_freqs)
+	total_freqs <- aggregate(all_freqs$freq, by=list(word=all_freqs$word), FUN=sum)
+
+	plot(total_freqs$x, type="l", xlab="Word (ordered index)", ylab="Count")
+}
+
+freq_plot(cleansed_twitter)
+freq_plot(cleansed_blogs)
+freq_plot(cleansed_news)
+
 ```
-
-You can also embed plots, for example:
-
-```{r, echo=FALSE}
-plot(cars)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
-
-## Findings

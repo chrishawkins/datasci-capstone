@@ -15,9 +15,12 @@ val cleansedBlogs = blogs.map(sentence => sentence.replaceAll("\\W+", " ").toLow
 val cleansedNews = news.map(sentence => sentence.replaceAll("\\W+", " ").toLowerCase)
 val cleansedTweets = twitter.map(sentence => sentence.replaceAll("\\W+", " ").toLowerCase)
 
-val blogFrequentWords = cleansedBlogs.flatMap(sentence => sentence.split(" ")).countByValue
-val newsFrequentWords = cleansedNews.flatMap(sentence => sentence.split(" ")).countByValue
-val tweetFrequentWords = cleansedTweets.flatMap(sentence => sentence.split(" ")).countByValue
+val blogFrequentWords = cleansedBlogs.flatMap(sentence => sentence.split(" ")).countByValue.toArray
+val newsFrequentWords = cleansedNews.flatMap(sentence => sentence.split(" ")).countByValue.toArray
+val tweetFrequentWords = cleansedTweets.flatMap(sentence => sentence.split(" ")).countByValue.toArray
+
+val blogTop = blogFrequentWords.sortBy(-_._2).take(3)
+val blogBottom = blogFrequentWords.sortBy(_._2).take(3)
 
 // -------------------
 // EXTRACTS ALL NGRAMS

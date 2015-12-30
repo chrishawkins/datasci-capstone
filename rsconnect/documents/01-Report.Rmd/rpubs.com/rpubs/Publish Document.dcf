@@ -1,0 +1,7 @@
+name: Publish Document
+account: rpubs
+server: rpubs.com
+bundleId:
+        https://api.rpubs.com/api/v1/document/139461/59d426cd786f47dab8443901802a824b
+url: http://rpubs.com/chrishawkins/139461
+when: 1451438348.14876

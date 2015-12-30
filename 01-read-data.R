@@ -17,13 +17,17 @@ text <- rbind(blogs, news, twitter)
 
 print("Concatenated inputs")
 
-cleanse_split <- function(sentence) {
-	sentence <- tolower(gsub("\\W", " ", sentence))
-	words <- strsplit(sentence, " ")
-	return(unlist(words))
+cleanse_normalize <- function(sentence) {
+	lower_with_spaces <- tolower(gsub("\\W+", " ", sentence))
+	trim_left <- gsub("^\\W+", "", lower_with_spaces)
+	trim_right <- gsub("\\W+$", "", trim_left)
+	return (trim_right)
 }
 
-cleanse_split(text)
+word_count <- function(sentence) {
+	s2 <- gsub(" ", "", sentence)
+    return (nchar(s) - nchar(s2))
+}
 
 N <- 3
 
